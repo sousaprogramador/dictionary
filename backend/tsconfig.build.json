@@ -1,4 +1,17 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "compilerOptions": {
+    "outDir": "./dist",
+    "removeComments": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "ormconfig.ts",
+    "src/entries/seed-words.ts"
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "test/**/*"
+  ]
 }

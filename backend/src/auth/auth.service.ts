@@ -1,37 +1,46 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  Injectable,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
-import { User } from '../users/entities/user.entity';
-import { SignUpDto } from './dto/signup.dto';
-import { SignInDto } from './dto/signin.dto';
+import { User } from '../infra/entities/user.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User) private users: Repository<User>,
-    private jwt: JwtService,
+    private readonly jwt: JwtService,
+    @InjectRepository(User) private readonly usersRepo: Repository<User>,
   ) {}
-  async signup(dto: SignUpDto) {
-    const exists = await this.users.findOne({ where: { email: dto.email } });
-    if (exists) throw new UnauthorizedException('Email already in use');
-    const password = await bcrypt.hash(dto.password, 10);
-    const saved = await this.users.save(
-      this.users.create({ ...dto, password }),
+
+  async signup(name: string, email: string, password: string) {
+    const exists = await this.usersRepo.findOne({ where: { email } });
+    if (exists)
+      throw new BadRequestException({ message: 'Email already registered' });
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await this.usersRepo.save(
+      this.usersRepo.create({ name, email, passwordHash }),
     );
-    const token = await this.jwt.signAsync({ sub: saved.id });
-    return { id: saved.id, name: saved.name, token: `Bearer ${token}` };
+    const token = await this.sign(user);
+    return { id: user.id, name: user.name, token };
   }
-  async signin(dto: SignInDto) {
-    const user = await this.users.findOne({ where: { email: dto.email } });
-    if (!user) throw new UnauthorizedException('Invalid credentials');
-    const ok = await bcrypt.compare(dto.password, user.password);
-    if (!ok) throw new UnauthorizedException('Invalid credentials');
-    const token = await this.jwt.signAsync({ sub: user.id });
-    return { id: user.id, name: user.name, token: `Bearer ${token}` };
+
+  async signin(email: string, password: string) {
+    const user = await this.usersRepo.findOne({ where: { email } });
+    if (!user)
+      throw new UnauthorizedException({ message: 'Invalid credentials' });
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok)
+      throw new UnauthorizedException({ message: 'Invalid credentials' });
+    const token = await this.sign(user);
+    return { id: user.id, name: user.name, token };
   }
-  findById(id: string) {
-    return this.users.findOne({ where: { id } });
+
+  private async sign(user: User) {
+    const payload = { sub: user.id, name: user.name };
+    return 'Bearer ' + this.jwt.sign(payload);
   }
 }

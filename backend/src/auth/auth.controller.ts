@@ -1,24 +1,24 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { SignUpDto } from './dto/signup.dto';
 import { SignInDto } from './dto/signin.dto';
+import { SignUpDto } from './dto/signup.dto';
 
-@Controller('api')
+@Controller()
 export class AuthController {
-  constructor(private service: AuthService) {}
+  constructor(private readonly service: AuthService) {}
 
-  @Get()
+  @Get('/')
   root() {
     return { message: 'Fullstack Challenge 🏅 - Dictionary' };
   }
 
-  @Post('auth/signup')
-  signup(@Body() dto: SignUpDto) {
-    return this.service.signup(dto);
+  @Post('/auth/signup')
+  signup(@Body() body: SignUpDto) {
+    return this.service.signup(body.name, body.email, body.password);
   }
 
-  @Post('auth/signin')
-  signin(@Body() dto: SignInDto) {
-    return this.service.signin(dto);
+  @Post('/auth/signin')
+  signin(@Body() body: SignInDto) {
+    return this.service.signin(body.email, body.password);
   }
 }

@@ -1,47 +1,46 @@
-import { Test } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 
 describe('AuthController', () => {
-  let controller: AuthController;
-  let service: { signup: jest.Mock; signin: jest.Mock };
+  const service: jest.Mocked<AuthService> = {
+    signup: jest.fn(),
+    signin: jest.fn(),
+  } as any;
 
-  beforeEach(async () => {
-    service = { signup: jest.fn(), signin: jest.fn() };
-    const module = await Test.createTestingModule({
-      controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: service }],
-    }).compile();
-    controller = module.get(AuthController);
-  });
+  const controller = new AuthController(service as any);
 
-  it('root', () => {
+  it('GET / root', () => {
     expect(controller.root()).toEqual({
       message: 'Fullstack Challenge 🏅 - Dictionary',
     });
   });
 
-  it('signup delega para service', async () => {
+  it('POST /auth/signup', async () => {
     service.signup.mockResolvedValue({
-      id: '1',
-      name: 'John',
+      id: 'u1',
+      name: 'User',
       token: 'Bearer x',
     });
     const res = await controller.signup({
-      name: 'John',
-      email: 'a@a.com',
-      password: 'pass',
-    });
-    expect(res).toEqual({ id: '1', name: 'John', token: 'Bearer x' });
+      name: 'User',
+      email: 'u@e.com',
+      password: '1234',
+    } as any);
+    expect(res).toEqual({ id: 'u1', name: 'User', token: 'Bearer x' });
+    expect(service.signup).toHaveBeenCalledWith('User', 'u@e.com', '1234');
   });
 
-  it('signin delega para service', async () => {
+  it('POST /auth/signin', async () => {
     service.signin.mockResolvedValue({
-      id: '1',
-      name: 'John',
-      token: 'Bearer x',
+      id: 'u1',
+      name: 'User',
+      token: 'Bearer y',
     });
-    const res = await controller.signin({ email: 'a@a.com', password: 'pass' });
-    expect(res).toEqual({ id: '1', name: 'John', token: 'Bearer x' });
+    const res = await controller.signin({
+      email: 'u@e.com',
+      password: '1234',
+    } as any);
+    expect(res).toEqual({ id: 'u1', name: 'User', token: 'Bearer y' });
+    expect(service.signin).toHaveBeenCalledWith('u@e.com', '1234');
   });
 });

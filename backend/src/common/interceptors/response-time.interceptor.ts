@@ -5,17 +5,17 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 
 @Injectable()
 export class ResponseTimeInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(ctx: ExecutionContext, next: CallHandler): Observable<any> {
     const started = Date.now();
-    const res = context.switchToHttp().getResponse();
+    const res = ctx.switchToHttp().getResponse();
     return next.handle().pipe(
-      finalize(() => {
+      tap(() => {
         const ms = Date.now() - started;
-        res.setHeader('x-response-time', `${ms}ms`);
+        res.setHeader('x-response-time', String(ms));
       }),
     );
   }
