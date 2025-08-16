@@ -1,10 +1,7 @@
 import './globals.css';
-import Providers from './providers';
+import { Providers } from './providers';
 
-export const metadata = {
-  title: 'Dictionary',
-  description: 'Fullstack Challenge',
-};
+export const metadata = { title: 'Dictionary' };
 
 export default function RootLayout({
   children,
@@ -14,7 +11,10 @@ export default function RootLayout({
   return (
     <html lang='pt-br'>
       <body className='min-h-screen bg-neutral-50 text-neutral-900'>
-        <Providers>{children}</Providers>
+        <header className='h-14 bg-sky-600' />
+        <Providers>
+          <div className='mx-auto max-w-6xl px-4 py-5'>{children}</div>
+        </Providers>
       </body>
     </html>
   );
