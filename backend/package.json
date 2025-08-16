@@ -10,7 +10,12 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "migrate": "node scripts/migrate.js",
-    "seed:words:dist": "node dist/entries/seed-words.js"
+    "seed:words:dist": "node dist/entries/seed-words.js",
+    "migration:run": "node node_modules/typeorm/cli.js -d ormconfig.js migration:run",
+    "migration:revert": "node node_modules/typeorm/cli.js -d ormconfig.js migration:revert",
+    "migrate:up": "node scripts/migrate.js up",
+    "migrate:down": "node scripts/migrate.js down",
+    "seed:words": "node dist/src/entries/seed-words.js"
   },
   "dependencies": {
     "@nestjs/axios": "^3.0.0",

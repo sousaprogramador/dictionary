@@ -9,7 +9,7 @@ const ds = new DataSource({
   password: process.env.PG_PASSWORD || 'postgres',
   database: process.env.PG_DB || 'dictionary',
   entities: ['dist/src/**/*.entity.js'],
-  migrations: ['dist/src/infra/database/migrations/*.js'],
+  migrations: ['dist/src/infra/migrations/*.js'],
   synchronize: false,
   logging: false,
 });
