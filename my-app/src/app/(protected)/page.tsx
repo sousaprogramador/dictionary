@@ -1,5 +1,5 @@
 import DictionaryShell from '@/components/DictionaryShell';
 
-export default function Word() {
+export default function HomeProtected() {
   return <DictionaryShell />;
 }

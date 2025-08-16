@@ -1,5 +1,9 @@
 'use client';
 import Cookies from 'js-cookie';
-export const getToken = () => Cookies.get('token') || '';
-export const setToken = (t: string) => Cookies.set('token', t, { expires: 7 });
-export const clearToken = () => Cookies.remove('token');
+
+const KEY = 'token';
+
+export const getToken = () => Cookies.get(KEY) || '';
+export const setToken = (token: string) =>
+  Cookies.set(KEY, token, { sameSite: 'lax' });
+export const clearToken = () => Cookies.remove(KEY);
