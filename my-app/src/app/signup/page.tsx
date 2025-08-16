@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { authService, userService } from '@/lib/api-client';
 import { setToken } from '@/lib/cookies';
 import { useAppDispatch } from '@/store';
@@ -14,73 +14,72 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const dispatch = useAppDispatch();
-  const router = useRouter();
 
-  async function onSubmit(e: React.FormEvent) {
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError('');
     setLoading(true);
     try {
       const r = await authService.signup(name, email, password);
-      const token = (r.token || '').replace(/^Bearer\s+/, '');
+      const token = String(r.token || '').replace(/^Bearer\s+/i, '');
       setToken(token);
       const me = await userService.me();
       dispatch(setCredentials({ token, user: me }));
       router.push('/');
     } catch {
-      setError('Falha ao cadastrar');
+      setError('Falha ao cadastrar.');
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className='min-h-screen flex items-center justify-center px-4'>
-      <form
-        onSubmit={onSubmit}
-        className='w-full max-w-md bg-white rounded-2xl shadow p-8 space-y-4'
-      >
-        <h1 className='text-2xl font-semibold'>Criar conta</h1>
+    <main className='auth-shell'>
+      <div className='auth-card'>
+        <h1 className='auth-title'>Criar conta</h1>
 
-        <input
-          className='w-full rounded-lg border px-4 py-2'
-          placeholder='nome'
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          className='w-full rounded-lg border px-4 py-2'
-          placeholder='email'
-          type='email'
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          className='w-full rounded-lg border px-4 py-2'
-          placeholder='senha'
-          type='password'
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <form className='auth-form' onSubmit={onSubmit}>
+          <input
+            className='input'
+            placeholder='nome'
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <input
+            className='input'
+            placeholder='email'
+            type='email'
+            autoComplete='email'
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
+            className='input'
+            placeholder='senha'
+            type='password'
+            autoComplete='new-password'
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-        {error && <div className='text-red-600 text-sm'>{error}</div>}
+          {error && <div className='badge danger'>{error}</div>}
 
-        <button
-          type='submit'
-          disabled={loading}
-          className='w-full rounded-lg bg-sky-700 text-white py-2 font-semibold disabled:opacity-60'
-        >
-          {loading ? 'Enviando...' : 'Registrar'}
-        </button>
+          <button className='btn' type='submit' disabled={loading}>
+            {loading ? 'Registrando…' : 'Registrar'}
+          </button>
+        </form>
 
-        <p className='text-center text-sm'>
+        <p className='auth-sub'>
           Já tem uma conta?{' '}
-          <Link href='/signin' className='text-sky-700 hover:underline'>
+          <Link className='link' href='/signin'>
             entrar
           </Link>
         </p>
-      </form>
-    </div>
+      </div>
+    </main>
   );
 }
