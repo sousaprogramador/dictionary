@@ -1,5 +1,316 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ===== Reset & base ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-:root { color-scheme: light; }
+:root {
+  --bg: #f5f8fb;
+  --panel: #ffffff;
+  --text: #0b1220;
+  --muted: #6b7280;
+  --primary: #0b79d0;
+  --primary-600: #0a6bb9;
+  --primary-50: #e9f3fc;
+  --border: #e5e7eb;
+  --shadow: 0 10px 24px rgba(2, 80, 145, 0.08);
+  --radius: 14px;
+}
+
+html, body, #__next {
+  height: 100%;
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+a { color: inherit; text-decoration: none; }
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+/* ===== Layout Scaffold ===== */
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(520px, 1fr) 420px;
+  gap: 24px;
+}
+
+.left { display: grid; gap: 16px; }
+
+.right {
+  position: sticky;
+  top: 24px;
+  height: fit-content;
+}
+
+/* ===== Cards & Panels ===== */
+.card {
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.panel {
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* ===== Tabs ===== */
+.tabs {
+  display: inline-flex;
+  gap: 6px;
+  background: var(--primary-50);
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: var(--primary);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tab:hover { background: #dff0ff; }
+
+.tab-active {
+  background: var(--panel);
+  color: var(--primary);
+  box-shadow: var(--shadow);
+}
+
+/* ===== Search ===== */
+.search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search input {
+  width: 280px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border-radius: 10px;
+  outline: none;
+}
+
+.search input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(11, 121, 208, 0.15);
+}
+
+/* ===== Buttons ===== */
+.btn {
+  appearance: none;
+  border: 0;
+  background: var(--primary);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .04s ease, background .2s ease;
+}
+
+.btn:hover { background: var(--primary-600); }
+.btn:active { transform: translateY(1px); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+}
+
+.btn-outline:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-sm { padding: 6px 12px; border-radius: 8px; font-weight: 600; }
+
+/* ===== Chips (palavras) ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  cursor: pointer;
+  transition: box-shadow .2s ease, transform .04s ease, background .2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip:hover {
+  box-shadow: var(--shadow);
+  background: #fcfdff;
+}
+.chip:active { transform: translateY(1px); }
+
+/* ===== Word card ===== */
+.word-card {
+  display: grid;
+  gap: 6px;
+  padding: 28px 24px;
+  background: #f7d9dd66;
+}
+
+.word-card .word {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: .3px;
+  text-align: center;
+}
+
+.word-card .phon {
+  text-align: center;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ===== Audio player ===== */
+.player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--panel);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.player-btn {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffb703;
+  border: none;
+  cursor: pointer;
+  transition: filter .2s ease, transform .04s ease;
+}
+
+.player-btn:hover { filter: brightness(.95); }
+.player-btn:active { transform: translateY(1px); }
+
+.player-range {
+  flex: 1;
+  accent-color: var(--primary);
+}
+
+/* ===== Meanings & actions ===== */
+.meanings h3 {
+  margin: 8px 0 4px;
+}
+
+.meanings-body {
+  color: var(--muted);
+  line-height: 1.5;
+  padding: 8px 0 4px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/* ===== Forms (auth) ===== */
+.center {
+  min-height: calc(100dvh - 64px);
+  display: grid;
+  place-items: center;
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+}
+
+.input {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  border-radius: 10px;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(11, 121, 208, 0.15);
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+/* ===== Header bar (opcional) ===== */
+.topbar {
+  height: 6px;
+  background: var(--primary);
+  box-shadow: 0 4px 10px rgba(11, 121, 208, 0.3);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1024px) {
+  .shell { grid-template-columns: 1fr; }
+  .right { position: static; }
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .search input { width: 220px; }
+}
+
+@media (max-width: 640px) {
+  .page { padding: 16px 12px 32px; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .word-card .word { font-size: 28px; }
+}

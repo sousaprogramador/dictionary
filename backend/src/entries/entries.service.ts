@@ -217,7 +217,8 @@ export class EntriesService {
       };
     }
 
-    const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`;
+    const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
+    console.log('url', url);
     const { data } = await axios.get(url, { timeout: 10000 }).catch((e) => {
       throw new BadRequestException(
         'Unable to fetch word from Free Dictionary API',
