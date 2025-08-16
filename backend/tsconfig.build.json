@@ -4,14 +4,6 @@
     "outDir": "./dist",
     "removeComments": true
   },
-  "include": [
-    "src/**/*.ts",
-    "ormconfig.ts",
-    "src/entries/seed-words.ts"
-  ],
-  "exclude": [
-    "**/*.spec.ts",
-    "**/*.test.ts",
-    "test/**/*"
-  ]
+  "include": ["src/**/*.ts", "ormconfig.ts", "src/entries/seed-words.ts"],
+  "exclude": ["**/*.spec.ts", "**/*.test.ts", "test/**/*"]
 }

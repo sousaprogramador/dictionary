@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,23 +14,18 @@ export class AuthService {
 
   async signup(name: string, email: string, password: string) {
     const exists = await this.usersRepo.findOne({ where: { email } });
-    if (exists)
-      throw new BadRequestException({ message: 'Email already registered' });
+    if (exists) throw new BadRequestException({ message: 'Email already registered' });
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await this.usersRepo.save(
-      this.usersRepo.create({ name, email, passwordHash }),
-    );
+    const user = await this.usersRepo.save(this.usersRepo.create({ name, email, passwordHash }));
     const token = await this.sign(user);
     return { id: user.id, name: user.name, token };
   }
 
   async signin(email: string, password: string) {
     const user = await this.usersRepo.findOne({ where: { email } });
-    if (!user)
-      throw new UnauthorizedException({ message: 'Invalid credentials' });
+    if (!user) throw new UnauthorizedException({ message: 'Invalid credentials' });
     const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok)
-      throw new UnauthorizedException({ message: 'Invalid credentials' });
+    if (!ok) throw new UnauthorizedException({ message: 'Invalid credentials' });
     const token = await this.sign(user);
     return { id: user.id, name: user.name, token };
   }

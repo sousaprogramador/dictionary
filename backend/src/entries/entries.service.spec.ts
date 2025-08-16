@@ -53,8 +53,7 @@ describe('EntriesService cursorWords', () => {
             arr = arr.filter((w) => w.id < val);
           }
         }
-        if (opts.order?.id === 'DESC')
-          arr.sort((a, b) => (a.id < b.id ? 1 : -1));
+        if (opts.order?.id === 'DESC') arr.sort((a, b) => (a.id < b.id ? 1 : -1));
         else arr.sort((a, b) => (a.id > b.id ? 1 : -1));
         if (opts.take) arr = arr.slice(0, opts.take);
         if (opts.select) {
@@ -66,8 +65,7 @@ describe('EntriesService cursorWords', () => {
         return arr;
       }),
       findOne: jest.fn(async ({ where }) => {
-        if (where?.word)
-          return words.find((w) => w.word === where.word) || null;
+        if (where?.word) return words.find((w) => w.word === where.word) || null;
         if (where?.id) return words.find((w) => w.id === where.id) || null;
         return null;
       }),
@@ -101,12 +99,7 @@ describe('EntriesService cursorWords', () => {
       set: jest.fn(async () => 'OK'),
     };
 
-    service = new EntriesService(
-      wordsRepo as any,
-      histRepo as any,
-      favRepo as any,
-      redis as any,
-    );
+    service = new EntriesService(wordsRepo as any, histRepo as any, favRepo as any, redis as any);
   });
 
   it('primeira página com cursor (sem next/prev): retorna primeiros N e next token', async () => {

@@ -30,11 +30,7 @@ describe('UserController', () => {
       hasNext: false,
       hasPrev: false,
     });
-    const res = await controller.history(
-      { user: { sub: 'u1' } } as any,
-      '1',
-      '20',
-    );
+    const res = await controller.history({ user: { sub: 'u1' } } as any, '1', '20');
     expect(res.totalDocs).toBe(1);
     expect(service.history).toHaveBeenCalledWith('u1', 1, 20);
   });
@@ -48,11 +44,7 @@ describe('UserController', () => {
       hasNext: false,
       hasPrev: false,
     });
-    const res = await controller.favorites(
-      { user: { sub: 'u1' } } as any,
-      '1',
-      '20',
-    );
+    const res = await controller.favorites({ user: { sub: 'u1' } } as any, '1', '20');
     expect(res.totalDocs).toBe(1);
     expect(service.favorites).toHaveBeenCalledWith('u1', 1, 20);
   });

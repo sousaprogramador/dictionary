@@ -41,13 +41,7 @@ async function run() {
   const chunkSize = 1000;
   for (let i = 0; i < words.length; i += chunkSize) {
     const slice = words.slice(i, i + chunkSize).map((word) => ({ word }));
-    await repo
-      .createQueryBuilder()
-      .insert()
-      .into(Word)
-      .values(slice)
-      .orIgnore()
-      .execute();
+    await repo.createQueryBuilder().insert().into(Word).values(slice).orIgnore().execute();
 
     console.log(
       `Inseridas (ou ignoradas se já existirem): ${Math.min(

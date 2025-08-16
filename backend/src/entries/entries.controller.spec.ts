@@ -41,13 +41,7 @@ describe('EntriesController (cursor only)', () => {
       hasPrev: true,
     } as any);
 
-    const res = await controller.list(
-      {} as any,
-      '',
-      '2',
-      'next_token',
-      undefined,
-    );
+    const res = await controller.list({} as any, '', '2', 'next_token', undefined);
     expect(res.results).toEqual(['charlie', 'delta']);
     expect(service.cursorWords).toHaveBeenCalledWith('', 2, 'next_token', null);
   });
@@ -62,21 +56,15 @@ describe('EntriesController (cursor only)', () => {
       hasPrev: false,
     } as any);
 
-    const res = await controller.list(
-      {} as any,
-      '',
-      '2',
-      undefined,
-      'prev_token',
-    );
+    const res = await controller.list({} as any, '', '2', undefined, 'prev_token');
     expect(res.results).toEqual(['alpha', 'bravo']);
     expect(service.cursorWords).toHaveBeenCalledWith('', 2, null, 'prev_token');
   });
 
   it('GET /entries/en com next e previous juntos: 400', async () => {
-    await expect(
-      controller.list({} as any, '', '2', 'next', 'prev'),
-    ).rejects.toThrow('Use only one of next or previous.');
+    await expect(controller.list({} as any, '', '2', 'next', 'prev')).rejects.toThrow(
+      'Use only one of next or previous.',
+    );
     expect(service.cursorWords).not.toHaveBeenCalled();
   });
 

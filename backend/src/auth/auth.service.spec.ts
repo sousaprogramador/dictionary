@@ -44,9 +44,7 @@ describe('AuthService', () => {
 
   it('signup email duplicado', async () => {
     usersRepo.findOne.mockResolvedValue({ id: 'x' } as any);
-    await expect(service.signup('User', 'e', 'p')).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(service.signup('User', 'e', 'p')).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('signin sucesso', async () => {
@@ -62,9 +60,7 @@ describe('AuthService', () => {
 
   it('signin email inexistente', async () => {
     usersRepo.findOne.mockResolvedValue(null);
-    await expect(service.signin('e', 'p')).rejects.toBeInstanceOf(
-      UnauthorizedException,
-    );
+    await expect(service.signin('e', 'p')).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
   it('signin senha inválida', async () => {
@@ -74,8 +70,6 @@ describe('AuthService', () => {
       passwordHash: 'hash',
     } as any);
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
-    await expect(service.signin('e', 'p')).rejects.toBeInstanceOf(
-      UnauthorizedException,
-    );
+    await expect(service.signin('e', 'p')).rejects.toBeInstanceOf(UnauthorizedException);
   });
 });

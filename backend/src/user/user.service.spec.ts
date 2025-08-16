@@ -16,9 +16,7 @@ describe('UserService', () => {
 
     usersRepo = {
       findOne: jest.fn(async ({ where }: any) =>
-        where.id === 'u1'
-          ? ({ id: 'u1', name: 'User', email: 'u@e.com' } as User)
-          : null,
+        where.id === 'u1' ? ({ id: 'u1', name: 'User', email: 'u@e.com' } as User) : null,
       ),
     };
 
@@ -38,12 +36,7 @@ describe('UserService', () => {
 
     wordsRepo = {}; // não usado aqui
 
-    service = new UserService(
-      usersRepo as any,
-      histRepo as any,
-      favRepo as any,
-      wordsRepo as any,
-    );
+    service = new UserService(usersRepo as any, histRepo as any, favRepo as any, wordsRepo as any);
   });
 
   it('me retorna perfil básico', async () => {

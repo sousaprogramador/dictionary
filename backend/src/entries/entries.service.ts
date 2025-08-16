@@ -1,12 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  Repository,
-  ILike,
-  MoreThan,
-  LessThan,
-  FindOptionsWhere,
-} from 'typeorm';
+import { Repository, ILike, MoreThan, LessThan, FindOptionsWhere } from 'typeorm';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { Redis } from 'ioredis';
 import axios from 'axios';
@@ -44,8 +38,7 @@ function decodeCursor(token?: string | null): CursorToken | null {
   try {
     const json = Buffer.from(token, 'base64url').toString('utf8');
     const obj = JSON.parse(json);
-    if (obj && typeof obj.id === 'string' && typeof obj.word === 'string')
-      return obj;
+    if (obj && typeof obj.id === 'string' && typeof obj.word === 'string') return obj;
     return null;
   } catch {
     return null;
@@ -61,14 +54,8 @@ export class EntriesService {
     @InjectRedis() private readonly redis: Redis,
   ) {}
 
-  async searchWords(
-    search: string,
-    page: number,
-    limit: number,
-  ): Promise<PageResponse> {
-    const where: FindOptionsWhere<Word> = search
-      ? { word: ILike(`${search}%`) }
-      : {};
+  async searchWords(search: string, page: number, limit: number): Promise<PageResponse> {
+    const where: FindOptionsWhere<Word> = search ? { word: ILike(`${search}%`) } : {};
     const [rows, total] = await this.wordsRepo.findAndCount({
       select: { word: true, id: true },
       where,
@@ -148,9 +135,7 @@ export class EntriesService {
             word: rows[rows.length - 1].word,
           })
         : null;
-      const newPrev = rows.length
-        ? encodeCursor({ id: rows[0].id, word: rows[0].word })
-        : null;
+      const newPrev = rows.length ? encodeCursor({ id: rows[0].id, word: rows[0].word }) : null;
 
       return {
         rows,
@@ -220,9 +205,7 @@ export class EntriesService {
     const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
     console.log('url', url);
     const { data } = await axios.get(url, { timeout: 10000 }).catch((e) => {
-      throw new BadRequestException(
-        'Unable to fetch word from Free Dictionary API',
-      );
+      throw new BadRequestException('Unable to fetch word from Free Dictionary API');
     });
 
     await this.redis.setex(
@@ -264,9 +247,7 @@ export class EntriesService {
       where: { word: word.toLowerCase() },
     });
     if (found) return found;
-    return this.wordsRepo.save(
-      this.wordsRepo.create({ word: word.toLowerCase() }),
-    );
+    return this.wordsRepo.save(this.wordsRepo.create({ word: word.toLowerCase() }));
   }
 
   async favorite(userId: string, word: string) {

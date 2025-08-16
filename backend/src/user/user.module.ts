@@ -9,10 +9,7 @@ import { Word } from '../infra/entities/word.entity';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([User, History, Favorite, Word]),
-    AuthModule,
-  ],
+  imports: [TypeOrmModule.forFeature([User, History, Favorite, Word]), AuthModule],
   controllers: [UserController],
   providers: [UserService],
   exports: [UserService],

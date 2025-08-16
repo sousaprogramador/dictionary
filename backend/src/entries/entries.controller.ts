@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  Req,
-  Res,
-  Post,
-  Delete,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, Res, Post, Delete, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { EntriesService } from './entries.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -30,19 +20,11 @@ export class EntriesController {
     if (next || prev) {
       return this.service.cursorWords(search ?? '', lim, next, prev);
     }
-    return this.service.searchWords(
-      search ?? '',
-      Math.max(1, Number(page ?? 1)),
-      lim,
-    );
+    return this.service.searchWords(search ?? '', Math.max(1, Number(page ?? 1)), lim);
   }
 
   @Get('en/:word')
-  async detail(
-    @Param('word') word: string,
-    @Req() req: any,
-    @Res() res: Response,
-  ) {
+  async detail(@Param('word') word: string, @Req() req: any, @Res() res: Response) {
     const result = await this.service.detailWithCache(word, req.user['sub']);
     res.setHeader('x-cache', result.headers['x-cache']);
     res.setHeader('x-response-time', result.headers['x-response-time']);

@@ -1,7 +1,5 @@
 const path = require('path');
-const dsModule = require(
-  path.join(__dirname, '..', 'dist', 'infra', 'database', 'data-source.js'),
-);
+const dsModule = require(path.join(__dirname, '..', 'dist', 'infra', 'database', 'data-source.js'));
 const dataSource = dsModule.default || dsModule.dataSource || dsModule;
 
 (async () => {
