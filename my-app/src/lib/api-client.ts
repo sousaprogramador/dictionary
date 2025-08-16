@@ -1,19 +1,16 @@
 'use client';
-import axios from 'axios';
+import axios, { AxiosHeaders, type InternalAxiosRequestConfig } from 'axios';
 import Cookies from 'js-cookie';
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 export const apiClient = axios.create({ baseURL });
-apiClient.interceptors.request.use((cfg) => {
+
+apiClient.interceptors.request.use((cfg: InternalAxiosRequestConfig) => {
   const t = Cookies.get('token');
-  return {
-    ...cfg,
-    headers: {
-      ...(cfg.headers || {}),
-      ...(t ? { Authorization: `Bearer ${t}` } : {}),
-    },
-  };
+  cfg.headers = AxiosHeaders.from(cfg.headers);
+  if (t) (cfg.headers as AxiosHeaders).set('Authorization', `Bearer ${t}`);
+  return cfg;
 });
 
 export type CursorPage = {
@@ -37,11 +34,7 @@ export const authService = {
 };
 
 export const entriesService = {
-  async list(
-    search: string,
-    limit: number,
-    cursor?: { next?: string; prev?: string }
-  ) {
+  async list(search: string, limit: number, cursor?: { next?: string; prev?: string }) {
     const p = new URLSearchParams();
     if (search) p.set('search', search);
     if (limit) p.set('limit', String(limit));
@@ -60,9 +53,7 @@ export const entriesService = {
     await apiClient.post(`/entries/en/${encodeURIComponent(word)}/favorite`);
   },
   async unfavorite(word: string) {
-    await apiClient.delete(
-      `/entries/en/${encodeURIComponent(word)}/unfavorite`
-    );
+    await apiClient.delete(`/entries/en/${encodeURIComponent(word)}/unfavorite`);
   },
 };
 

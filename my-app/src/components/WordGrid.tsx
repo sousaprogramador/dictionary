@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { entriesService, type CursorPage } from '@/lib/api-client';
 import { useInView } from 'react-intersection-observer';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+type Cursor = { next?: string; prev?: string };
 type Props = { limit?: number };
 
 export default function WordGrid({ limit = 24 }: Props) {
@@ -18,64 +19,48 @@ export default function WordGrid({ limit = 24 }: Props) {
   }, [params]);
 
   const { ref, inView } = useInView({ rootMargin: '600px 0px' });
-  const queryKey = useMemo(() => ['words', search, limit], [search, limit]);
+  const queryKey = useMemo(() => ['words', search, limit] as const, [search, limit]);
 
-  const q = useInfiniteQuery({
+  const q = useInfiniteQuery<CursorPage, Error, CursorPage, typeof queryKey, Cursor>({
     queryKey,
-    queryFn: async ({
-      pageParam,
-    }: {
-      pageParam?: { next?: string; prev?: string };
-    }) => {
+    initialPageParam: { next: undefined, prev: undefined },
+    queryFn: async ({ pageParam }) => {
       const data = await entriesService.list(search, limit, pageParam);
       return data as CursorPage;
     },
-    // só avança se realmente existir um cursor "next"
-    getNextPageParam: (last) => (last?.next ? { next: last.next } : undefined),
-    initialPageParam: undefined as { next?: string; prev?: string } | undefined,
+    getNextPageParam: (last) => (last?.next ? { next: last.next, prev: undefined } : undefined),
+    getPreviousPageParam: (last) =>
+      last?.previous ? { prev: last.previous, next: undefined } : undefined,
     refetchOnWindowFocus: false,
     staleTime: 30_000,
     gcTime: 5 * 60_000,
   });
 
   useEffect(() => {
-    const hasNextCursor =
-      !!q.data?.pages?.length && !!q.data.pages[q.data.pages.length - 1]?.next;
+    if (inView && q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage();
+  }, [inView, q.hasNextPage, q.isFetchingNextPage, q.fetchNextPage]);
 
-    if (inView && hasNextCursor && !q.isFetchingNextPage) {
-      q.fetchNextPage();
-    }
-  }, [inView, q]);
-
-  // dedupe para evitar itens repetidos quando a API retornar a mesma página
+  const pages = (q.data as InfiniteData<CursorPage> | undefined)?.pages ?? [];
   const words = useMemo(() => {
     const s = new Set<string>();
-    q.data?.pages.forEach((p) => p.results.forEach((w) => s.add(w)));
+    pages.forEach((p) => p.results.forEach((w) => s.add(w)));
     return Array.from(s);
-  }, [q.data]);
+  }, [pages]);
 
   return (
-    <div className='panel'>
-      <div className='panel-header'>
-        <div className='tabs'>
-          <button
-            className='tab tab-active'
-            onClick={() => router.push('/')}
-            type='button'
-          >
+    <div className="panel">
+      <div className="panel-header">
+        <div className="tabs">
+          <button className="tab tab-active" onClick={() => router.push('/')} type="button">
             Word list
           </button>
-          <button
-            className='tab'
-            onClick={() => router.push('/favorites')}
-            type='button'
-          >
+          <button className="tab" onClick={() => router.push('/favorites')} type="button">
             Favorites
           </button>
         </div>
 
         <form
-          className='search'
+          className="search"
           onSubmit={(e) => {
             e.preventDefault();
             const usp = new URLSearchParams();
@@ -86,21 +71,21 @@ export default function WordGrid({ limit = 24 }: Props) {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder='Search...'
+            placeholder="Search..."
           />
-          <button className='btn btn-sm' type='submit'>
+          <button className="btn btn-sm" type="submit">
             Go
           </button>
         </form>
       </div>
 
-      <div className='grid'>
+      <div className="grid">
         {words.map((w) => (
           <button
             key={w}
-            className='chip'
+            className="chip"
             onClick={() => router.push(`/word?word=${encodeURIComponent(w)}`)}
-            type='button'
+            type="button"
             title={w}
           >
             {w}
@@ -108,7 +93,6 @@ export default function WordGrid({ limit = 24 }: Props) {
         ))}
       </div>
 
-      {/* sentinela para rolagem infinita */}
       <div ref={ref} style={{ height: 1 }} />
     </div>
   );

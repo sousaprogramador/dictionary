@@ -1,12 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import {
-  useInfiniteQuery,
-  useQuery,
-  useQueryClient,
-  useMutation,
-} from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { entriesService, userService } from '@/lib/api-client';
 import AudioPlayer from './AudioPlayer';
 
@@ -19,15 +14,24 @@ export default function DictionaryShell() {
   const [limit] = useState(20);
   const [current, setCurrent] = useState<string | null>(null);
 
+  type Cursor = { next?: string; prev?: string };
+  type CursorPage = {
+    results: string[];
+    hasNext: boolean;
+    next?: string;
+    hasPrev: boolean;
+    previous?: string;
+  };
+
   const listQ = useInfiniteQuery({
-    queryKey: ['words', search, limit],
-    queryFn: async ({ pageParam }: { pageParam?: Cursor }) =>
+    queryKey: ['words', search, limit] as const,
+    initialPageParam: { next: undefined, prev: undefined } as Cursor,
+    queryFn: async ({ pageParam }: { pageParam: Cursor }) =>
       entriesService.list(search, limit, pageParam),
-    initialPageParam: {} as Cursor,
-    getNextPageParam: (last) =>
-      last?.hasNext ? { next: last.next } : undefined,
-    getPreviousPageParam: (last) =>
-      last?.hasPrev ? { prev: last.previous } : undefined,
+    getNextPageParam: (last: CursorPage): Cursor | undefined =>
+      last.hasNext ? { next: last.next, prev: undefined } : undefined,
+    getPreviousPageParam: (last: CursorPage): Cursor | undefined =>
+      last.hasPrev ? { prev: last.previous, next: undefined } : undefined,
   });
 
   const words = useMemo(() => {
@@ -84,39 +88,27 @@ export default function DictionaryShell() {
       await listQ.fetchNextPage();
       const nextPages = client.getQueryData<any>(['words', search, limit]);
       const nextWords: string[] = Array.from(
-        new Set((nextPages?.pages || []).flatMap((p: any) => p.results))
+        new Set((nextPages?.pages || []).flatMap((p: any) => p.results)),
       );
       const nidx = nextWords.indexOf(current);
       if (nidx < nextWords.length - 1) setCurrent(nextWords[nidx + 1]);
     }
   };
 
-  const rightList =
-    tab === 'favorites'
-      ? favQ.data?.results?.map((r: any) => r.word) || []
-      : words;
+  const rightList = tab === 'favorites' ? favQ.data?.results?.map((r: any) => r.word) || [] : words;
 
   const onSearch = async () => {
     await listQ.refetch();
-    const fresh =
-      client.getQueryData<any>(['words', search, limit])?.pages?.[0]?.results ||
-      [];
+    const fresh = client.getQueryData<any>(['words', search, limit])?.pages?.[0]?.results || [];
     setCurrent(fresh[0] || null);
   };
 
   return (
-    <div
-      style={{ display: 'grid', gridTemplateColumns: '1.1fr .9fr', gap: 24 }}
-    >
-      <section className='card' style={{ padding: 16 }}>
-        <div
-          className='card pron-card'
-          style={{ background: '#f3cdd1', border: 0 }}
-        >
+    <div style={{ display: 'grid', gridTemplateColumns: '1.1fr .9fr', gap: 24 }}>
+      <section className="card" style={{ padding: 16 }}>
+        <div className="card pron-card" style={{ background: '#f3cdd1', border: 0 }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 18, opacity: 0.7 }}>
-              {current ? `"${current}"` : '—'}
-            </div>
+            <div style={{ fontSize: 18, opacity: 0.7 }}>{current ? `"${current}"` : '—'}</div>
             <div style={{ marginTop: 8 }}>{phoneticText || ' '}</div>
           </div>
         </div>
@@ -129,13 +121,9 @@ export default function DictionaryShell() {
           <div style={{ fontWeight: 800, marginBottom: 8 }}>Meanings</div>
           <div style={{ display: 'grid', gap: 8 }}>
             {(detailQ.data?.[0]?.meanings || []).map((m: any, i: number) => (
-              <div key={i} className='card' style={{ padding: 12 }}>
-                <div style={{ fontSize: 12, opacity: 0.7 }}>
-                  {m.partOfSpeech}
-                </div>
-                <div style={{ marginTop: 6 }}>
-                  {m.definitions?.[0]?.definition || ''}
-                </div>
+              <div key={i} className="card" style={{ padding: 12 }}>
+                <div style={{ fontSize: 12, opacity: 0.7 }}>{m.partOfSpeech}</div>
+                <div style={{ marginTop: 6 }}>{m.definitions?.[0]?.definition || ''}</div>
               </div>
             ))}
           </div>
@@ -149,10 +137,10 @@ export default function DictionaryShell() {
             alignItems: 'center',
           }}
         >
-          <button className='btn secondary' onClick={goPrev}>
+          <button className="btn secondary" onClick={goPrev}>
             Voltar
           </button>
-          <button className='btn' onClick={goNext}>
+          <button className="btn" onClick={goNext}>
             Próximo
           </button>
           <div style={{ flex: 1 }} />
@@ -166,9 +154,9 @@ export default function DictionaryShell() {
         </div>
       </section>
 
-      <aside className='card' style={{ padding: 14 }}>
+      <aside className="card" style={{ padding: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div className='tabs'>
+          <div className="tabs">
             <button
               className={`tab ${tab === 'list' ? 'active' : ''}`}
               onClick={() => setTab('list')}
@@ -185,13 +173,13 @@ export default function DictionaryShell() {
           <div style={{ flex: 1 }} />
           <div style={{ display: 'flex', gap: 8 }}>
             <input
-              className='input'
-              placeholder='Search...'
+              className="input"
+              placeholder="Search..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{ width: 280 }}
             />
-            <button className='btn btn-sm' onClick={onSearch}>
+            <button className="btn btn-sm" onClick={onSearch}>
               Go
             </button>
           </div>
@@ -205,18 +193,14 @@ export default function DictionaryShell() {
             padding: 4,
           }}
         >
-          <div className='word-grid'>
+          <div className="word-grid">
             {rightList.map((w: string) => (
               <button
                 key={w}
-                className='word-chip'
+                className="word-chip"
                 onClick={() => setCurrent(w)}
                 aria-current={current === w}
-                style={
-                  current === w
-                    ? { outline: `4px solid var(--ring)` }
-                    : undefined
-                }
+                style={current === w ? { outline: `4px solid var(--ring)` } : undefined}
               >
                 {w}
               </button>
@@ -231,10 +215,7 @@ export default function DictionaryShell() {
                 marginTop: 12,
               }}
             >
-              <button
-                className='btn btn-sm secondary'
-                onClick={() => listQ.fetchNextPage()}
-              >
+              <button className="btn btn-sm secondary" onClick={() => listQ.fetchNextPage()}>
                 Carregar mais
               </button>
             </div>

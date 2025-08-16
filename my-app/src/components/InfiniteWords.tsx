@@ -3,10 +3,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useInView } from 'react-intersection-observer';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { userService } from '@/lib/api-client';
+import { useInfiniteQuery, type InfiniteData } from '@tanstack/react-query';
+import { entriesService } from '@/lib/api-client';
 
 type Cursor = { next?: string; prev?: string };
+type Page = {
+  items: string[];
+  next?: string;
+  prev?: string;
+  hasNext: boolean;
+  hasPrev: boolean;
+  totalDocs: number;
+};
 type Props = { initial?: { search?: string; limit?: number } };
 
 const DEFAULT_LIMIT = 20;
@@ -26,35 +34,26 @@ export default function InfiniteWords({ initial }: Props) {
     setLimit(urlLimit);
   }, [urlSearch, urlLimit]);
 
-  const qk = useMemo(() => ['words', query, limit], [query, limit]);
+  const qk = useMemo(() => ['words', query, limit] as const, [query, limit]);
 
-  const q = useInfiniteQuery({
+  const q = useInfiniteQuery<Page, Error, Page, typeof qk, Cursor>({
     queryKey: qk,
-    queryFn: async ({ pageParam }: { pageParam?: Cursor }) => {
-      const usp = new URLSearchParams();
-      if (query) usp.set('search', query);
-      usp.set('limit', String(limit));
-      if (pageParam?.next) usp.set('next', pageParam.next);
-      if (pageParam?.prev) usp.set('prev', pageParam.prev);
-
-      const { data, headers } = await userService.get(
-        `/entries/en?${usp.toString()}`
-      );
+    initialPageParam: { next: undefined, prev: undefined },
+    queryFn: async ({ pageParam }) => {
+      const page = await entriesService.list(query, limit, pageParam);
       return {
-        items: (data?.results ?? []) as string[],
-        next: data?.next as string | undefined,
-        prev: data?.previous as string | undefined,
-        hasNext: Boolean(data?.hasNext),
-        hasPrev: Boolean(data?.hasPrev),
-        totalDocs: Number(data?.totalDocs ?? 0),
-        headers,
+        items: (page?.results ?? []) as string[],
+        next: page?.next as string | undefined,
+        prev: page?.previous as string | undefined,
+        hasNext: Boolean(page?.hasNext),
+        hasPrev: Boolean(page?.hasPrev),
+        totalDocs: Number(page?.totalDocs ?? 0),
       };
     },
-    getNextPageParam: (last) =>
-      last.hasNext && last.next ? { next: last.next } : undefined,
-    getPreviousPageParam: (last) =>
-      last.hasPrev && last.prev ? { prev: last.prev } : undefined,
-    initialPageParam: {},
+    getNextPageParam: (last): Cursor | undefined =>
+      last.hasNext && last.next ? { next: last.next, prev: undefined } : undefined,
+    getPreviousPageParam: (last): Cursor | undefined =>
+      last.hasPrev && last.prev ? { prev: last.prev, next: undefined } : undefined,
     refetchOnWindowFocus: false,
   });
 
@@ -83,33 +82,33 @@ export default function InfiniteWords({ initial }: Props) {
     applyUrl(query, safe);
   };
 
+  const pages = (q.data as InfiniteData<Page> | undefined)?.pages ?? [];
+
   return (
-    <div className='space-y-4'>
-      {/* Search controls */}
-      <div className='flex gap-2'>
+    <div className="space-y-4">
+      <div className="flex gap-2">
         <input
-          className='border rounded px-3 py-2 w-full'
-          placeholder='Search word…'
+          className="border rounded px-3 py-2 w-full"
+          placeholder="Search word…"
           value={query}
           onChange={(e) => onSearch(e.target.value)}
         />
         <input
-          type='number'
-          className='border rounded px-3 py-2 w-28'
+          type="number"
+          className="border rounded px-3 py-2 w-28"
           min={1}
           max={100}
           value={limit}
           onChange={(e) => onLimitChange(Number(e.target.value))}
-          aria-label='Limit'
+          aria-label="Limit"
         />
       </div>
 
-      {/* Results */}
-      <ul className='divide-y rounded border'>
-        {q.data?.pages
+      <ul className="divide-y rounded border">
+        {pages
           .flatMap((p) => p.items)
           .map((w) => (
-            <li key={w} className='p-3'>
+            <li key={w} className="p-3">
               {w}
             </li>
           ))}
@@ -117,10 +116,8 @@ export default function InfiniteWords({ initial }: Props) {
 
       <div ref={ref} />
 
-      {q.isFetchingNextPage && (
-        <p className='text-sm text-gray-500'>loading…</p>
-      )}
-      {q.isError && <p className='text-red-600 text-sm'>failed to load</p>}
+      {q.isFetchingNextPage && <p className="text-sm text-gray-500">loading…</p>}
+      {q.isError && <p className="text-red-600 text-sm">failed to load</p>}
     </div>
   );
 }
