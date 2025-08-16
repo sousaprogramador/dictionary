@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   useInfiniteQuery,
   useQuery,
   useQueryClient,
+  useMutation,
 } from '@tanstack/react-query';
 import { entriesService, userService } from '@/lib/api-client';
+import AudioPlayer from './AudioPlayer';
 
 type Cursor = { next?: string; prev?: string };
 
@@ -15,8 +17,6 @@ export default function DictionaryShell() {
   const [tab, setTab] = useState<'list' | 'favorites'>('list');
   const [search, setSearch] = useState('');
   const [limit] = useState(20);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [progress, setProgress] = useState(0);
   const [current, setCurrent] = useState<string | null>(null);
 
   const listQ = useInfiniteQuery({
@@ -48,35 +48,27 @@ export default function DictionaryShell() {
   const favQ = useQuery({
     queryKey: ['favorites', limit],
     queryFn: async () => userService.favorites(1, limit),
-    enabled: tab === 'favorites',
+    enabled: tab === 'favorites' || !!current,
   });
 
+  const isFavorited = useMemo(() => {
+    const list: string[] = favQ.data?.results?.map((r: any) => r.word) || [];
+    return current ? list.includes(current) : false;
+  }, [favQ.data, current]);
+
+  const favMut = useMutation({
+    mutationFn: async (word: string) => {
+      if (isFavorited) await entriesService.unfavorite(word);
+      else await entriesService.favorite(word);
+    },
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ['favorites'] });
+    },
+  });
+
+  const phonetics = detailQ.data?.[0]?.phonetics || [];
   const phoneticText: string =
-    detailQ.data?.[0]?.phonetics?.find((p: any) => p.text)?.text ||
-    detailQ.data?.[0]?.phonetics?.[0]?.text ||
-    '';
-
-  const audioUrl: string =
-    detailQ.data?.[0]?.phonetics?.find((p: any) => p.audio)?.audio || '';
-
-  const onPlay = () => {
-    if (!audioRef.current) return;
-    audioRef.current.currentTime = progress;
-    audioRef.current.play();
-  };
-
-  useEffect(() => {
-    const el = audioRef.current;
-    if (!el) return;
-    const update = () => setProgress(el.currentTime);
-    el.addEventListener('timeupdate', update);
-    return () => el.removeEventListener('timeupdate', update);
-  }, []);
-
-  const onSeek = (v: number) => {
-    setProgress(v);
-    if (audioRef.current) audioRef.current.currentTime = v;
-  };
+    phonetics.find((p: any) => p.text)?.text || phonetics?.[0]?.text || '';
 
   const goPrev = () => {
     if (!current) return;
@@ -90,12 +82,9 @@ export default function DictionaryShell() {
     if (idx < words.length - 1) setCurrent(words[idx + 1]);
     else if (listQ.hasNextPage) {
       await listQ.fetchNextPage();
-      const nextWords = Array.from(
-        new Set(
-          (
-            client.getQueryData<any>(['words', search, limit])?.pages || []
-          ).flatMap((p: any) => p.results)
-        )
+      const nextPages = client.getQueryData<any>(['words', search, limit]);
+      const nextWords: string[] = Array.from(
+        new Set((nextPages?.pages || []).flatMap((p: any) => p.results))
       );
       const nidx = nextWords.indexOf(current);
       if (nidx < nextWords.length - 1) setCurrent(nextWords[nidx + 1]);
@@ -106,6 +95,14 @@ export default function DictionaryShell() {
     tab === 'favorites'
       ? favQ.data?.results?.map((r: any) => r.word) || []
       : words;
+
+  const onSearch = async () => {
+    await listQ.refetch();
+    const fresh =
+      client.getQueryData<any>(['words', search, limit])?.pages?.[0]?.results ||
+      [];
+    setCurrent(fresh[0] || null);
+  };
 
   return (
     <div
@@ -124,35 +121,47 @@ export default function DictionaryShell() {
           </div>
         </div>
 
-        <div className='player'>
-          <button className='play' onClick={onPlay} aria-label='Play'>
-            ▶
-          </button>
-          <input
-            type='range'
-            min={0}
-            max={audioRef.current?.duration || 1}
-            step={0.01}
-            value={progress}
-            onChange={(e) => onSeek(Number(e.target.value))}
-          />
-          <audio ref={audioRef} src={audioUrl} preload='metadata' />
+        <div style={{ marginTop: 12 }}>
+          <AudioPlayer word={current || ''} phonetics={phonetics} />
         </div>
 
         <div style={{ marginTop: 18 }}>
           <div style={{ fontWeight: 800, marginBottom: 8 }}>Meanings</div>
-          <div style={{ minHeight: 40 }}>
-            {detailQ.data?.[0]?.meanings?.[0]?.definitions?.[0]?.definition ||
-              ''}
+          <div style={{ display: 'grid', gap: 8 }}>
+            {(detailQ.data?.[0]?.meanings || []).map((m: any, i: number) => (
+              <div key={i} className='card' style={{ padding: 12 }}>
+                <div style={{ fontSize: 12, opacity: 0.7 }}>
+                  {m.partOfSpeech}
+                </div>
+                <div style={{ marginTop: 6 }}>
+                  {m.definitions?.[0]?.definition || ''}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div style={{ marginTop: 16, display: 'flex', gap: 10 }}>
+        <div
+          style={{
+            marginTop: 16,
+            display: 'flex',
+            gap: 10,
+            alignItems: 'center',
+          }}
+        >
           <button className='btn secondary' onClick={goPrev}>
             Voltar
           </button>
           <button className='btn' onClick={goNext}>
             Próximo
+          </button>
+          <div style={{ flex: 1 }} />
+          <button
+            className={`btn ${isFavorited ? 'warning' : 'secondary'}`}
+            disabled={!current || favMut.isPending}
+            onClick={() => current && favMut.mutate(current)}
+          >
+            {isFavorited ? 'Remover favorito' : 'Salvar favorito'}
           </button>
         </div>
       </section>
@@ -182,7 +191,7 @@ export default function DictionaryShell() {
               onChange={(e) => setSearch(e.target.value)}
               style={{ width: 280 }}
             />
-            <button className='btn btn-sm' onClick={() => listQ.refetch()}>
+            <button className='btn btn-sm' onClick={onSearch}>
               Go
             </button>
           </div>
