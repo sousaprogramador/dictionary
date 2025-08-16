@@ -1,28 +1,19 @@
-# ---------- builder ----------
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS deps
 WORKDIR /app
-
 COPY package.json yarn.lock* package-lock.json* ./
-RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; else npm i; fi
+RUN yarn install --frozen-lockfile
 
-COPY tsconfig*.json ./
-COPY nest-cli.json ./
-COPY ormconfig.ts ./
-COPY src ./src
-
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 RUN yarn build
 
-# ---------- runner ----------
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-
-COPY package.json yarn.lock* package-lock.json* ./
-RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile --production; \
-  elif [ -f package-lock.json ]; then npm ci --omit=dev; else npm i --omit=dev; fi
-
-COPY --from=builder /app/dist ./dist
-
-EXPOSE 3000
-CMD ["node", "dist/src/main.js"]
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/scripts ./scripts
+COPY --from=build /app/.env .env
+CMD ["sh","-c","node scripts/migrate.js && node dist/src/main.js"]

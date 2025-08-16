@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Favorite } from '../infra/entities/favorite.entity';
-import { History } from '../infra/entities/history.entity';
-import { User } from '../infra/entities/user.entity';
-import { Word } from '../infra/entities/word.entity';
 import { Repository } from 'typeorm';
+import { User } from '../infra/entities/user.entity';
+import { History } from '../infra/entities/history.entity';
+import { Favorite } from '../infra/entities/favorite.entity';
 
 @Injectable()
 export class UserService {
@@ -12,7 +11,6 @@ export class UserService {
     @InjectRepository(User) private readonly usersRepo: Repository<User>,
     @InjectRepository(History) private readonly histRepo: Repository<History>,
     @InjectRepository(Favorite) private readonly favRepo: Repository<Favorite>,
-    @InjectRepository(Word) private readonly wordsRepo: Repository<Word>,
   ) {}
 
   async me(userId: string) {
@@ -21,7 +19,7 @@ export class UserService {
     return { id: u.id, name: u.name, email: u.email };
   }
 
-  async history(userId: string, page = 1, limit = 20) {
+  async history(userId: string, page?: number, limit?: number) {
     const p = Math.max(1, Number(page || 1));
     const lim = Math.max(1, Math.min(100, Number(limit || 20)));
     const [rows, total] = await this.histRepo.findAndCount({
@@ -42,7 +40,7 @@ export class UserService {
     };
   }
 
-  async favorites(userId: string, page = 1, limit = 20) {
+  async favorites(userId: string, page?: number, limit?: number) {
     const p = Math.max(1, Number(page || 1));
     const lim = Math.max(1, Math.min(100, Number(limit || 20)));
     const [rows, total] = await this.favRepo.findAndCount({

@@ -2,66 +2,60 @@ import {
   Controller,
   Get,
   Param,
-  Post,
-  Delete,
   Query,
   Req,
   Res,
+  Post,
+  Delete,
   UseGuards,
-  BadRequestException,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { EntriesService } from './entries.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('entries')
+@UseGuards(JwtAuthGuard)
 export class EntriesController {
   constructor(private readonly service: EntriesService) {}
 
   @Get('en')
-  @UseGuards(JwtAuthGuard)
   async list(
-    @Req() _req: any,
-    @Query('search') search?: string,
+    @Query('search') search: string,
     @Query('limit') limit?: string,
     @Query('next') next?: string,
-    @Query('previous') previous?: string,
+    @Query('prev') prev?: string,
+    @Query('page') page?: string,
   ) {
-    if (next && previous) {
-      throw new BadRequestException('Use only one of next or previous.');
+    const lim = Math.max(1, Math.min(100, Number(limit ?? 20)));
+    if (next || prev) {
+      return this.service.cursorWords(search ?? '', lim, next, prev);
     }
-    const lim = Number(limit || '20');
-    return this.service.cursorWords(
+    return this.service.searchWords(
       search ?? '',
+      Math.max(1, Number(page ?? 1)),
       lim,
-      next ?? null,
-      previous ?? null,
     );
   }
 
   @Get('en/:word')
-  @UseGuards(JwtAuthGuard)
   async detail(
-    @Req() req: any,
-    @Res({ passthrough: true }) res: any,
     @Param('word') word: string,
+    @Req() req: any,
+    @Res() res: Response,
   ) {
     const result = await this.service.detailWithCache(word, req.user['sub']);
     res.setHeader('x-cache', result.headers['x-cache']);
     res.setHeader('x-response-time', result.headers['x-response-time']);
-    return result.data;
+    return res.json(result.data);
   }
 
   @Post('en/:word/favorite')
-  @UseGuards(JwtAuthGuard)
-  async favorite(@Req() req: any, @Param('word') word: string) {
-    await this.service.favoriteWord(req.user['sub'], word);
-    return { ok: true };
+  async favorite(@Param('word') word: string, @Req() req: any) {
+    await this.service.favorite(req.user['sub'], word);
   }
 
   @Delete('en/:word/unfavorite')
-  @UseGuards(JwtAuthGuard)
-  async unfavorite(@Req() req: any, @Param('word') word: string) {
-    await this.service.unfavoriteWord(req.user['sub'], word);
-    return { ok: true };
+  async unfavorite(@Param('word') word: string, @Req() req: any) {
+    await this.service.unfavorite(req.user['sub'], word);
   }
 }

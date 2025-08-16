@@ -1,9 +1,10 @@
 import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+
 import { UserService } from './user.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('user/me')
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard)
 export class UserController {
   constructor(private readonly service: UserService) {}
 

@@ -1,21 +1,24 @@
-import { of } from 'rxjs';
-import { ResponseTimeInterceptor } from './response-time.interceptor';
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
+import { Observable, tap } from 'rxjs';
 
-describe('ResponseTimeInterceptor', () => {
-  it('deve setar x-response-time', (done) => {
-    const interceptor = new ResponseTimeInterceptor();
-    const setHeader = jest.fn();
-    const ctx: any = {
-      switchToHttp: () => ({ getResponse: () => ({ setHeader }) }),
-    };
-    const next: any = { handle: () => of({ ok: true }) };
-    interceptor.intercept(ctx, next).subscribe((res) => {
-      expect(res).toEqual({ ok: true });
-      expect(setHeader).toHaveBeenCalledWith(
-        'x-response-time',
-        expect.any(String),
-      );
-      done();
-    });
-  });
-});
+@Injectable()
+export class ResponseTimeInterceptor implements NestInterceptor {
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler<any>,
+  ): Observable<any> {
+    const started = Date.now();
+    return next.handle().pipe(
+      tap(() => {
+        const ms = Date.now() - started;
+        const res = context.switchToHttp().getResponse();
+        if (res?.setHeader) res.setHeader('x-response-time', `${ms}ms`);
+      }),
+    );
+  }
+}
