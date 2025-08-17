@@ -1,23 +1,13 @@
-// src/components/AudioPlayer.tsx
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 type Ph = { text?: string; audio?: string };
 
-export default function AudioPlayer({
-  word,
-  phonetics = [],
-}: {
-  word: string;
-  phonetics?: Ph[];
-}) {
+export default function AudioPlayer({ word, phonetics = [] }: { word: string; phonetics?: Ph[] }) {
   const url = useMemo(
-    () =>
-      phonetics
-        ?.map((p) => p.audio?.trim())
-        .find((u) => u && /^https?:\/\//.test(u!)) || null,
-    [phonetics]
+    () => phonetics?.map((p) => p.audio?.trim()).find((u) => u && /^https?:\/\//.test(u!)) || null,
+    [phonetics],
   );
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -76,17 +66,17 @@ export default function AudioPlayer({
   const disabled = !url;
 
   return (
-    <div className='player'>
-      {url ? <audio ref={audioRef} src={url} preload='metadata' /> : null}
+    <div className="player">
+      {url ? <audio ref={audioRef} src={url} preload="metadata" /> : null}
       <button
         className={`btn icon primary ${playing ? 'pulse' : ''}`}
         onClick={play}
-        aria-label='Play'
+        aria-label="Play"
       >
         ▶
       </button>
       <input
-        type='range'
+        type="range"
         min={0}
         max={Math.max(1, dur)}
         step={0.01}

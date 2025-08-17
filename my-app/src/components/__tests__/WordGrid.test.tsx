@@ -1,4 +1,3 @@
-// src/components/__tests__/WordGrid.test.tsx
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -16,7 +15,7 @@ const hoisted = vi.hoisted(() => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: () => hoisted.router,
-  useSearchParams: () => hoisted.params, // objeto estável entre renders
+  useSearchParams: () => hoisted.params,
 }));
 
 vi.mock('react-intersection-observer', () => ({
