@@ -40,7 +40,7 @@ docker compose up -d --build
 ```
 
 A API estará disponível em:  
-👉 `http://localhost:3000/api`
+👉 `http://localhost:3000`
 
 ---
 
@@ -63,7 +63,7 @@ yarn install
 Crie um arquivo `.env.local`:
 
 ```env
-NEXT_PUBLIC_API_BASE=http://localhost:3000
+NEXT_PUBLIC_API_BASE=http://localhost:3001
 ```
 
 Suba o app:
